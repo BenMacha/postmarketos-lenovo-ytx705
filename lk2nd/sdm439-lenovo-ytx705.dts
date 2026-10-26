@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/dts-v1/;
+
+#include <skeleton64.dtsi>
+#include <lk2nd.dtsi>
+
+/ {
+	qcom,msm-id = <QCOM_ID_SDM439 0>;
+	/* Stock base DTB has no board-id: board data comes from the dtbo overlay */
+	qcom,pmic-id = <0x10016 0x25 0x0 0x0>;
+
+	/* Bootloader appears to really want to access symbols */
+	__symbols__ {};
+};
+
+&lk2nd {
+	model = "Lenovo Yoga Smart Tab";
+	compatible = "lenovo,ytx705";
+
+	lk2nd,dtb-files = "sdm439-lenovo-ytx705";
+};

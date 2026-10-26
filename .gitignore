@@ -1,0 +1,7 @@
+# Device dumps hold the IMEI, serial number and calibration data: never commit them
+*.img
+*.dtb
+*.dtbo
+backup*/
+stock/
+.DS_Store
