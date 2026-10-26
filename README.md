@@ -18,12 +18,35 @@ Work in progress port of mainline Linux / [postmarketOS](https://postmarketos.or
 | lk2nd | ✅ flashed to `boot`, with the stock base DTB, see below |
 | Mainline kernel 7.1.3 + DTS | ✅ boots ([kernel/](kernel/)) |
 | postmarketOS + Plasma Mobile | ✅ boots from `userdata`, lock screen and shell work |
-| Display | ✅ `simpledrm` (bootloader splash, 1200×1920) — software rendering, slow; no DSI panel driver yet |
+| Display | ✅ `simpledrm` (bootloader splash, 1200×1920) — software rendering, slow |
+| DSI panel + GPU | 🚧 drivers in place but disabled in the DTS: the 12nm DSI PLL does not lock (see below) |
 | Touchscreen | ✅ FocalTech FT8201 (`focaltech,ft8201`, `edt-ft5x06`), axes inverted (panel mounted upside down) |
 | Buttons | ✅ power, volume up/down |
 | eMMC, µSD, USB networking | ✅ |
-| Wi-Fi / BT | 🧪 WCNSS (Pronto) + WCN3660B described, not tested yet |
-| GPU (Adreno 505), DSI panel, audio, battery, cameras | ❓ to do |
+| Wi-Fi | ✅ WCNSS (Pronto) + WCN3660B, firmware loaded from the modem partition |
+| Bluetooth | 🧪 driver loads, not tested |
+| French UI | ✅ set `[Translations] LANGUAGE=fr` in `~/.config/plasma-localerc` |
+| Audio, battery, sensors (auto-rotation), cameras | ❓ to do |
+
+## Kernel patches
+
+On top of msm89x7-mainline 7.1.3 ([kernel/](kernel/)):
+
+1. `arm64: dts: qcom: sdm439: Add Lenovo Yoga Smart Tab (YT-X705)`
+2. `drm/msm/dsi: Add simple 12nm PHY/PLL driver` — by Lanik, from msm89x7-mainline
+   `barni2000/6.14-sdm439`, forward-ported
+3. `drm/panel: Add Lenovo YT-X705 FT8201 BOE panel` — generated with
+   linux-mdss-dsi-panel-driver-generator; DSI/GPU nodes described, `status = "disabled"`
+4. `drm/msm/dsi: dsi_phy_12nm: Use determine_rate` — 7.1 dropped `clk_ops.round_rate`
+5. `soc: qcom: ubwc: Add SDM429 and SDM439` — without it `msm-mdss` fails with `-EINVAL`
+   (`Couldn't find UBWC config data for this platform`)
+
+### Display status (help welcome)
+
+With `mdss`/`gpu` enabled (DSI `vdda` = PM8953 L23, `vddio` = L6, PHY in LDO mode, as in
+the stock DT), the DRM device and the panel probe, but `DSI PLL is *not* locked` and
+`dsi_link_clk_set_rate_6g: Failed to set rate pixel clk, -22`, then vblank timeouts.
+Note: a failed `msm-mdss` probe also turns off the bootloader framebuffer (black screen).
 
 ## Hardware (from the stock device tree)
 

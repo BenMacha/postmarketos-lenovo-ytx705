@@ -1,0 +1,27 @@
+From 1e71bf14ed16755c729549b266fbedd8492b0709 Mon Sep 17 00:00:00 2001
+From: benmecha <dali@benmacha.tn>
+Date: Mon, 26 Oct 2026 22:34:23 +0000
+Subject: [PATCH 5/5] soc: qcom: ubwc: Add SDM429 and SDM439
+
+Both use the MSM8937 display and GPU blocks. Without an entry, msm-mdss
+probe fails with -EINVAL (Couldn't find UBWC config data for this platform).
+---
+ drivers/soc/qcom/ubwc_config.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/soc/qcom/ubwc_config.c b/drivers/soc/qcom/ubwc_config.c
+index a7dcf298f..180d1b6f0 100644
+--- a/drivers/soc/qcom/ubwc_config.c
++++ b/drivers/soc/qcom/ubwc_config.c
+@@ -272,6 +272,8 @@ static const struct of_device_id qcom_ubwc_configs[] __maybe_unused = {
+ 	{ .compatible = "qcom,sc8180x", .data = &sc8180x_data, },
+ 	{ .compatible = "qcom,sc8280xp", .data = &sc8280xp_data, },
+ 	{ .compatible = "qcom,sda660", .data = &msm8937_data },
++	{ .compatible = "qcom,sdm429", .data = &msm8937_data },
++	{ .compatible = "qcom,sdm439", .data = &msm8937_data },
+ 	{ .compatible = "qcom,sdm450", .data = &msm8937_data },
+ 	{ .compatible = "qcom,sdm630", .data = &msm8937_data },
+ 	{ .compatible = "qcom,sdm632", .data = &msm8937_data },
+-- 
+2.47.3
+

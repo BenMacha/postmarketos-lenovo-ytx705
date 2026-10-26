@@ -112,6 +112,28 @@ lk2nd finds postmarketOS on `userdata` and boots it. The Plasma Mobile lock scre
 the password given to `pmbootstrap install`. Over USB, the tablet is reachable at
 `ssh user@172.16.42.1`.
 
+## 6. After the first boot
+
+**Pin the kernel.** The postmarketOS repository has its own
+`linux-postmarketos-qcom-msm89x7` without the YT-X705 device tree; if an upgrade replaced
+yours, lk2nd would find no DTB and the tablet would not boot:
+
+```sh
+sudo apk add linux-postmarketos-qcom-msm89x7=7.1.3-r5    # use your built version
+```
+
+To update the kernel, copy your newer package and `sudo apk add --allow-untrusted
+linux-postmarketos-qcom-msm89x7-<version>.apk`, then change the pin.
+
+**French interface:**
+
+```sh
+printf '[Formats]\nLANG=fr_FR.UTF-8\n\n[Translations]\nLANGUAGE=fr\n' > ~/.config/plasma-localerc
+```
+
+**Faster UI** (software rendering until the DSI/GPU work is done): Settings → Workspace
+behaviour → animation speed: instant.
+
 ## Going back to Android
 
 From the Lenovo fastboot, flash the saved `boot.img` (and `dtbo`, `recovery`, `vbmeta` if

@@ -1,0 +1,86 @@
+From 5969ff1376cd2813e7fb8a47e7ebe8f5374c794e Mon Sep 17 00:00:00 2001
+From: benmecha <dali@benmacha.tn>
+Date: Mon, 26 Oct 2026 22:25:35 +0000
+Subject: [PATCH 4/5] drm/msm/dsi: dsi_phy_12nm: Use determine_rate (7.1 clk
+ API)
+
+clk_ops.round_rate and divider_round_rate() are gone; port the VCO and
+pixel clocks to determine_rate like dsi_phy_14nm.
+---
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c | 31 ++++++++++------------
+ 1 file changed, 14 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
+index ae11102e1..a1cf5142f 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
+@@ -730,17 +730,16 @@ static void dsi_pll_12nm_vco_unprepare(struct clk_hw *hw)
+ 	pll_12nm->phy->pll_on = false;
+ }
+ 
+-static long dsi_pll_12nm_clk_round_rate(struct clk_hw *hw,
+-		unsigned long rate, unsigned long *parent_rate)
++static int dsi_pll_12nm_clk_determine_rate(struct clk_hw *hw,
++					   struct clk_rate_request *req)
+ {
+ 	struct dsi_pll_12nm *pll_12nm = to_pll_12nm(hw);
+ 
+-	if      (rate < pll_12nm->phy->cfg->min_pll_rate)
+-		return  pll_12nm->phy->cfg->min_pll_rate;
+-	else if (rate > pll_12nm->phy->cfg->max_pll_rate)
+-		return  pll_12nm->phy->cfg->max_pll_rate;
+-	else
+-		return rate;
++	req->rate = clamp_t(unsigned long, req->rate,
++			    pll_12nm->phy->cfg->min_pll_rate,
++			    pll_12nm->phy->cfg->max_pll_rate);
++
++	return 0;
+ }
+ 
+ static int dsi_pll_12nm_clk_enable(struct clk_hw *hw)
+@@ -761,7 +760,7 @@ static int dsi_pll_12nm_clk_enable(struct clk_hw *hw)
+ }
+ 
+ static const struct clk_ops clk_ops_dsi_pll_12nm_vco = {
+-	.round_rate = dsi_pll_12nm_clk_round_rate,
++	.determine_rate = dsi_pll_12nm_clk_determine_rate,
+ 	.set_rate = dsi_pll_12nm_clk_set_rate,
+ 	.recalc_rate = dsi_pll_12nm_clk_recalc_rate,
+ 	.prepare = dsi_pll_12nm_vco_prepare,
+@@ -969,18 +968,16 @@ static unsigned long dsi_pll_12nm_pixel_recalc_rate(struct clk_hw *hw,
+ 				   postdiv->flags, width);
+ }
+ 
+-static long dsi_pll_12nm_pixel_round_rate(struct clk_hw *hw,
+-					    unsigned long rate,
+-					    unsigned long *prate)
++static int dsi_pll_12nm_pixel_determine_rate(struct clk_hw *hw,
++					     struct clk_rate_request *req)
+ {
+ 	struct dsi_pll_12nm_pixel *postdiv = to_pll_12nm_pixel(hw);
+ 	struct dsi_pll_12nm *pll_12nm = postdiv->pll;
+ 
+-	DBG("DSI%d PLL parent rate=%lu", pll_12nm->phy->id, rate);
++	DBG("DSI%d PLL parent rate=%lu", pll_12nm->phy->id, req->rate);
+ 
+-	return divider_round_rate(hw, rate, prate, NULL,
+-				  postdiv->width,
+-				  postdiv->flags);
++	return divider_determine_rate(hw, req, NULL, postdiv->width,
++				      postdiv->flags);
+ }
+ 
+ static int dsi_pll_12nm_pixel_set_rate(struct clk_hw *hw, unsigned long rate,
+@@ -1016,7 +1013,7 @@ static int dsi_pll_12nm_pixel_set_rate(struct clk_hw *hw, unsigned long rate,
+ 
+ static const struct clk_ops clk_ops_dsi_pll_12nm_pixel = {
+ 	.recalc_rate = dsi_pll_12nm_pixel_recalc_rate,
+-	.round_rate = dsi_pll_12nm_pixel_round_rate,
++	.determine_rate = dsi_pll_12nm_pixel_determine_rate,
+ 	.set_rate = dsi_pll_12nm_pixel_set_rate,
+ };
+ 
+-- 
+2.47.3
+

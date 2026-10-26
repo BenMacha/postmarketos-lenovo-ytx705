@@ -1,7 +1,8 @@
 From 58686f796b093f912c987468e54dee90b703ecdc Mon Sep 17 00:00:00 2001
 From: benmacha <dali@benmacha.tn>
 Date: Mon, 26 Oct 2026 20:52:18 +0000
-Subject: [PATCH] arm64: dts: qcom: sdm439: Add Lenovo Yoga Smart Tab (YT-X705)
+Subject: [PATCH 1/5] arm64: dts: qcom: sdm439: Add Lenovo Yoga Smart Tab
+ (YT-X705)
 
 ---
  arch/arm64/boot/dts/qcom/Makefile             |   1 +

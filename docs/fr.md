@@ -11,10 +11,13 @@ Les commandes détaillées sont dans le tutoriel anglais : [tutorial.md](tutoria
 |---|---|
 | Déverrouillage, lk2nd | ✅ |
 | Noyau Linux 7.1.3 + Plasma Mobile | ✅ démarre, écran de verrouillage et shell |
-| Écran | ✅ mais affichage logiciel (lent) : pas encore de pilote d'écran DSI ni de GPU |
+| Écran | ✅ mais affichage logiciel (lent), par l'image du bootloader |
+| Écran DSI + GPU (fluidité) | 🚧 pilotes prêts mais désactivés : la PLL DSI 12 nm ne se verrouille pas encore |
 | Tactile, boutons, eMMC, carte µSD, réseau USB | ✅ |
-| Wi-Fi, Bluetooth | 🧪 décrits, pas encore testés |
-| GPU, son, batterie, caméras | ❓ à faire |
+| Wi-Fi | ✅ |
+| Interface en français | ✅ (voir « Après le premier démarrage ») |
+| Bluetooth | 🧪 pilote chargé, pas encore testé |
+| Son, batterie, rotation automatique, caméras | ❓ à faire |
 
 ## Les étapes
 
@@ -40,6 +43,18 @@ Les commandes détaillées sont dans le tutoriel anglais : [tutorial.md](tutoria
 
 6. **Premier démarrage** : le code PIN de l'écran de verrouillage est le mot de passe donné
    à `pmbootstrap install`. Par le câble USB : `ssh user@172.16.42.1`.
+
+## Après le premier démarrage
+
+- **Bloquer le noyau** : le dépôt postmarketOS a son propre paquet
+  `linux-postmarketos-qcom-msm89x7`, sans le device tree de la YT-X705. S'il remplaçait le
+  vôtre, la tablette ne démarrerait plus :
+  `sudo apk add linux-postmarketos-qcom-msm89x7=7.1.3-r5` (votre version).
+- **Interface en français** :
+  `printf '[Formats]\nLANG=fr_FR.UTF-8\n\n[Translations]\nLANGUAGE=fr\n' > ~/.config/plasma-localerc`
+  puis redémarrer.
+- **Moins de lenteur** en attendant le GPU : Paramètres → Comportement de l'espace de
+  travail → vitesse des animations : instantanée.
 
 ## Pièges rencontrés
 
