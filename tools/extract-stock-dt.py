@@ -9,6 +9,8 @@ partition whose qcom,board-id matches the hardware.
 Usage:
     extract-stock-dt.py boot.img dtbo.img OUTDIR [--model "SDM439 MTP"] [--board-id 8,1]
 
+boot.img may also be a bare Image.gz-dtb (kernel with appended DTBs).
+
 Writes OUTDIR/base.dtb, OUTDIR/overlay.dtbo and, when fdtoverlay and dtc
 are installed, OUTDIR/merged.dtb + OUTDIR/merged.dts.
 """
@@ -23,11 +25,13 @@ DTBO_MAGIC = 0xD7B7AB1E
 
 
 def appended_dtbs(boot):
-    if boot[:8] != b"ANDROID!":
-        raise SystemExit("boot.img: not an Android boot image")
-    kernel_size, = struct.unpack("<I", boot[8:12])
-    page_size, = struct.unpack("<I", boot[36:40])
-    kernel = boot[page_size:page_size + kernel_size]
+    """DTBs appended to the kernel of a boot.img, or of a bare Image.gz-dtb."""
+    if boot[:8] == b"ANDROID!":
+        kernel_size, = struct.unpack("<I", boot[8:12])
+        page_size, = struct.unpack("<I", boot[36:40])
+        kernel = boot[page_size:page_size + kernel_size]
+    else:
+        kernel = boot
     i = 0
     while True:
         i = kernel.find(FDT_MAGIC, i)

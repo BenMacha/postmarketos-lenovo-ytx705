@@ -1,12 +1,12 @@
-From 0f2562f1efe43808fa01c1aa5a78e204285304d4 Mon Sep 17 00:00:00 2001
+From 58686f796b093f912c987468e54dee90b703ecdc Mon Sep 17 00:00:00 2001
 From: benmacha <dali@benmacha.tn>
 Date: Mon, 26 Oct 2026 20:52:18 +0000
 Subject: [PATCH] arm64: dts: qcom: sdm439: Add Lenovo Yoga Smart Tab (YT-X705)
 
 ---
  arch/arm64/boot/dts/qcom/Makefile             |   1 +
- .../boot/dts/qcom/sdm439-lenovo-ytx705.dts    | 453 ++++++++++++++++++
- 2 files changed, 454 insertions(+)
+ .../boot/dts/qcom/sdm439-lenovo-ytx705.dts    | 456 ++++++++++++++++++
+ 2 files changed, 457 insertions(+)
  create mode 100644 arch/arm64/boot/dts/qcom/sdm439-lenovo-ytx705.dts
 
 diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
@@ -23,10 +23,10 @@ index 0e344cb9d..523c62e32 100644
  dtb-$(CONFIG_ARCH_QCOM)	+= sdm439-nokia-panther.dtb
 diff --git a/arch/arm64/boot/dts/qcom/sdm439-lenovo-ytx705.dts b/arch/arm64/boot/dts/qcom/sdm439-lenovo-ytx705.dts
 new file mode 100644
-index 000000000..102480639
+index 000000000..38eb00015
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/sdm439-lenovo-ytx705.dts
-@@ -0,0 +1,453 @@
+@@ -0,0 +1,456 @@
 +// SPDX-License-Identifier: BSD-3-Clause
 +/*
 + * Lenovo Yoga Smart Tab (YT-X705F/L/X) device tree source
@@ -141,6 +141,9 @@ index 000000000..102480639
 +
 +		touchscreen-size-x = <1200>;
 +		touchscreen-size-y = <1920>;
++		/* The panel is mounted upside down (stock: panel-orientation 180) */
++		touchscreen-inverted-x;
++		touchscreen-inverted-y;
 +	};
 +};
 +

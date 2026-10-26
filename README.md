@@ -5,21 +5,25 @@ Work in progress port of mainline Linux / [postmarketOS](https://postmarketos.or
 [msm89x7-mainline](https://github.com/msm89x7-mainline/linux) kernel and the generic
 `qcom-msm89x7` postmarketOS device. Target UI: Plasma Mobile.
 
-> 🇫🇷 Portage en cours de Linux mainline / postmarketOS sur la Lenovo Yoga Smart Tab.
-> Le bootloader se déverrouille, lk2nd démarre ; le noyau et l'image sont en cours de test.
-> Voir [docs/fr.md](docs/fr.md).
+> 🇫🇷 postmarketOS (Plasma Mobile) démarre sur la Lenovo Yoga Smart Tab.
+> Tutoriel complet en français : [docs/fr.md](docs/fr.md).
+
+**Step-by-step guide: [docs/tutorial.md](docs/tutorial.md).**
 
 ## Status
 
 | Part | State |
 |---|---|
 | Bootloader unlock | ✅ `fastboot oem unlock-go` (wipes data) |
-| lk2nd | ✅ boots from RAM (`fastboot boot`) with the stock base DTB, see below |
-| Mainline DTS | 🧪 written ([kernel/](kernel/)), not booted yet |
-| Display | 🧪 `simple-framebuffer` from the bootloader splash (no DSI panel driver yet) |
-| Touchscreen | 🧪 FocalTech FT8201 (`focaltech,ft8201`, `edt-ft5x06`), I²C 3 @ 0x38 |
-| Wi-Fi / BT | 🧪 WCNSS (Pronto) + WCN3660B, same wiring as the TB-X505X |
-| Audio, battery, cameras, GPU | ❓ not looked at yet |
+| lk2nd | ✅ flashed to `boot`, with the stock base DTB, see below |
+| Mainline kernel 7.1.3 + DTS | ✅ boots ([kernel/](kernel/)) |
+| postmarketOS + Plasma Mobile | ✅ boots from `userdata`, lock screen and shell work |
+| Display | ✅ `simpledrm` (bootloader splash, 1200×1920) — software rendering, slow; no DSI panel driver yet |
+| Touchscreen | ✅ FocalTech FT8201 (`focaltech,ft8201`, `edt-ft5x06`), axes inverted (panel mounted upside down) |
+| Buttons | ✅ power, volume up/down |
+| eMMC, µSD, USB networking | ✅ |
+| Wi-Fi / BT | 🧪 WCNSS (Pronto) + WCN3660B described, not tested yet |
+| GPU (Adreno 505), DSI panel, audio, battery, cameras | ❓ to do |
 
 ## Hardware (from the stock device tree)
 
@@ -75,15 +79,15 @@ calibration data.
 - After one failed `fastboot boot`, the aboot answers `unknown reason` to everything until
   `fastboot reboot bootloader`. Restart it between tests.
 - `fastboot getvar <name>` hangs on the stock aboot; `fastboot getvar all` works.
+- The touchscreen reports coordinates rotated by 180° compared to the bootloader
+  framebuffer: the DTS sets `touchscreen-inverted-x` and `touchscreen-inverted-y`.
 
 ## Building postmarketOS
 
-```sh
-pmbootstrap init                      # device: qcom-msm89x7, UI: plasma-mobile
-git -C linux am ../kernel/*.patch     # on top of msm89x7-mainline 7.1.3
-pmbootstrap build --force --src=linux linux-postmarketos-qcom-msm89x7
-pmbootstrap install
-```
+The kernel patch goes into the `linux-postmarketos-qcom-msm89x7` package of pmaports
+(don't use `pmbootstrap build --src`: its copy follows `.gitignore` and drops
+`kernel/time/timeconst.bc`, so the build fails). Full commands in
+[docs/tutorial.md](docs/tutorial.md).
 
 ## Credits
 
