@@ -12,7 +12,7 @@ Les commandes détaillées sont dans le tutoriel anglais : [tutorial.md](tutoria
 | Déverrouillage, lk2nd | ✅ |
 | Noyau Linux 7.1.3 + Plasma Mobile | ✅ démarre, écran de verrouillage et shell |
 | Écran | ✅ mais affichage logiciel (lent), par l'image du bootloader |
-| Écran DSI + GPU (fluidité) | 🚧 pilotes prêts mais désactivés : la PLL DSI 12 nm ne se verrouille pas encore |
+| Écran DSI + GPU (fluidité) | 🚧 pilotes prêts mais désactivés : PLL et horloges réglées, mais la liaison DSI n'atteint pas encore le panneau |
 | Tactile, boutons, eMMC, carte µSD, réseau USB | ✅ |
 | Wi-Fi | ✅ |
 | Interface en français | ✅ (voir « Après le premier démarrage ») |
@@ -32,7 +32,7 @@ Les commandes détaillées sont dans le tutoriel anglais : [tutorial.md](tutoria
    **Ne jamais publier ces sauvegardes** : elles contiennent l'IMEI, le numéro de série et
    la calibration de la tablette.
 4. **Fabriquer l'image** avec pmbootstrap (appareil `qcom-msm89x7`, interface
-   `plasma-mobile`), en ajoutant le patch du dossier `kernel/` au paquet du noyau.
+   `plasma-mobile`), en ajoutant les patches du dossier `kernel/` au paquet du noyau.
 5. **Flasher** depuis le mode fastboot Lenovo :
 
    ```sh
@@ -49,12 +49,22 @@ Les commandes détaillées sont dans le tutoriel anglais : [tutorial.md](tutoria
 - **Bloquer le noyau** : le dépôt postmarketOS a son propre paquet
   `linux-postmarketos-qcom-msm89x7`, sans le device tree de la YT-X705. S'il remplaçait le
   vôtre, la tablette ne démarrerait plus :
-  `sudo apk add linux-postmarketos-qcom-msm89x7=7.1.3-r5` (votre version).
+  `sudo apk add linux-postmarketos-qcom-msm89x7=7.1.3-r11` (votre version).
+  Redémarrer après chaque installation de noyau.
 - **Interface en français** :
   `printf '[Formats]\nLANG=fr_FR.UTF-8\n\n[Translations]\nLANGUAGE=fr\n' > ~/.config/plasma-localerc`
   puis redémarrer.
 - **Moins de lenteur** en attendant le GPU : Paramètres → Comportement de l'espace de
   travail → vitesse des animations : instantanée.
+
+## Où en est l'écran rapide (DSI)
+
+Aucune tablette SDM439 n'a encore l'écran DSI qui marche en Linux mainline. Sont corrigés :
+la PLL DSI 12 nm se verrouille (patch 6), l'horloge pixel s'applique enfin (patch 9 : la PLL
+était éteinte pendant le réglage), les délais de la voie d'horloge reprennent les valeurs
+d'origine (patch 10). Le contrôleur envoie l'image, l'alimentation du panneau et l'activation
+du rétroéclairage sont bonnes, mais l'écran reste noir sans lumière : les commandes DSI
+n'atteignent pas le panneau (`cmd dma tx failed … -110`). Détails dans le README anglais.
 
 ## Pièges rencontrés
 
@@ -64,6 +74,8 @@ Les commandes détaillées sont dans le tutoriel anglais : [tutorial.md](tutoria
 - Avec lk2nd, `fastboot fetch boot` saute les 512 premiers Ko : récupérer aussi la
   pseudo-partition `lk2nd` et les mettre bout à bout.
 - L'écran est monté à l'envers : le tactile a besoin de `touchscreen-inverted-x/y`.
+- Dès que le pilote d'affichage `msm` prend la main, l'image du bootloader s'arrête (écran
+  noir) : tester par SSH (USB ou Wi-Fi).
 - `pmbootstrap build --src` oublie `kernel/time/timeconst.bc` : passer par un patch dans le
   paquet du noyau.
 

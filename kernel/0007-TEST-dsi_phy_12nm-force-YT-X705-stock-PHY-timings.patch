@@ -1,0 +1,37 @@
+From 28924345d3d4c2e68b33e2a3d570e1ad280e54a9 Mon Sep 17 00:00:00 2001
+From: benmecha <dali@benmacha.tn>
+Date: Mon, 26 Oct 2026 23:03:34 +0000
+Subject: [PATCH 7/8] TEST: dsi_phy_12nm: force YT-X705 stock PHY timings
+
+---
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
+index db6db4488..e59fa3573 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
+@@ -1329,6 +1329,20 @@ static int dsi_12nm_phy_enable(struct msm_dsi_phy *phy,
+ 		return -EINVAL;
+ 	}
+ 
++	pr_info("dsi_phy_12nm: calc timings clk_zero=%#x clk_trail=%#x clk_post=%#x clk_rqst=%#x hs_zero=%#x hs_trail=%#x hs_rqst=%#x hs_exit=%#x\n",
++		timing->clk_zero, timing->clk_trail, timing->clk_post, timing->clk_rqst,
++		timing->hs_zero, timing->hs_trail, timing->hs_rqst, timing->hs_exit);
++
++	/* TEST: YT-X705 stock qcom,mdss-dsi-panel-timings-phy-12nm */
++	timing->clk_zero = 0x1a;
++	timing->clk_trail = 0x0a;
++	timing->clk_post = 0x0c;
++	timing->clk_rqst = 0x07;
++	timing->hs_zero = 0x04;
++	timing->hs_trail = 0x09;
++	timing->hs_rqst = 0x07;
++	timing->hs_exit = 0x0a;
++
+ 	/* CTRL0: CFG_CLK_EN */
+ 	writel(BIT(0), phy->base + CTRL0);
+ 
+-- 
+2.47.3
+

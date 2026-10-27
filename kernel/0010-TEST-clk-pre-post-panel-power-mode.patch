@@ -1,0 +1,99 @@
+From 321ebbf5e5b5891e017e0ddb4b1a20453b184880 Mon Sep 17 00:00:00 2001
+From: Ben Macha <dali@benmacha.tn>
+Date: Tue, 27 Oct 2026 05:57:55 +0000
+Subject: [PATCH] TEST: stock clk_pre/clk_post, log panel power mode
+
+---
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c    |  4 +++
+ .../panel-lenovo-ytx705-ft8201-boe.c          | 33 ++++++++++++++++++-
+ 2 files changed, 36 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
+index e59fa3573..c0de4a82c 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
+@@ -1342,6 +1342,10 @@ static int dsi_12nm_phy_enable(struct msm_dsi_phy *phy,
+ 	timing->hs_trail = 0x09;
+ 	timing->hs_rqst = 0x07;
+ 	timing->hs_exit = 0x0a;
++	/* stock qcom,mdss-dsi-t-clk-pre / t-clk-post */
++	timing->shared_timings.clk_pre = 0x27;
++	timing->shared_timings.clk_post = 0x12;
++	timing->shared_timings.clk_pre_inc_by_2 = false;
+ 
+ 	/* CTRL0: CFG_CLK_EN */
+ 	writel(BIT(0), phy->base + CTRL0);
+diff --git a/drivers/gpu/drm/panel/msm89x7-generated/panel-lenovo-ytx705-ft8201-boe.c b/drivers/gpu/drm/panel/msm89x7-generated/panel-lenovo-ytx705-ft8201-boe.c
+index 5638d4e23..05d39ed3b 100644
+--- a/drivers/gpu/drm/panel/msm89x7-generated/panel-lenovo-ytx705-ft8201-boe.c
++++ b/drivers/gpu/drm/panel/msm89x7-generated/panel-lenovo-ytx705-ft8201-boe.c
+@@ -70,12 +70,27 @@ static int lenovo_ytx705_ft8201_boe_off(struct lenovo_ytx705_ft8201_boe *ctx)
+ 	return dsi_ctx.accum_err;
+ }
+ 
++static bool skip_init;
++module_param(skip_init, bool, 0644);
++MODULE_PARM_DESC(skip_init, "TEST: keep the panel as the bootloader left it");
++
+ static int lenovo_ytx705_ft8201_boe_prepare(struct drm_panel *panel)
+ {
+ 	struct lenovo_ytx705_ft8201_boe *ctx = to_lenovo_ytx705_ft8201_boe(panel);
+ 	struct device *dev = &ctx->dsi->dev;
+ 	int ret;
+ 
++	{
++		u8 mode = 0;
++		int r = mipi_dsi_dcs_get_power_mode(ctx->dsi, &mode);
++
++		dev_info(dev, "TEST before reset: power_mode=%#x (%d) skip_init=%d\n",
++			 mode, r, skip_init);
++	}
++
++	if (skip_init)
++		return 0;
++
+ 	lenovo_ytx705_ft8201_boe_reset(ctx);
+ 
+ 	ret = lenovo_ytx705_ft8201_boe_on(ctx);
+@@ -85,6 +100,13 @@ static int lenovo_ytx705_ft8201_boe_prepare(struct drm_panel *panel)
+ 		return ret;
+ 	}
+ 
++	{
++		u8 mode = 0;
++		int r = mipi_dsi_dcs_get_power_mode(ctx->dsi, &mode);
++
++		dev_info(dev, "TEST after on: power_mode=%#x (%d)\n", mode, r);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -142,6 +164,15 @@ static int lenovo_ytx705_ft8201_boe_bl_update_status(struct backlight_device *bl
+ 	if (ret < 0)
+ 		return ret;
+ 
++	{
++		u8 mode = 0, bl[2] = { 0 };
++		int r1 = mipi_dsi_dcs_get_power_mode(dsi, &mode);
++		int r2 = mipi_dsi_dcs_read(dsi, MIPI_DCS_GET_DISPLAY_BRIGHTNESS, bl, sizeof(bl));
++
++		dev_info(&dsi->dev, "TEST bl=%u power_mode=%#x (%d) read_bl=%02x %02x (%d)\n",
++			 brightness, mode, r1, bl[0], bl[1], r2);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -175,7 +206,7 @@ static int lenovo_ytx705_ft8201_boe_probe(struct mipi_dsi_device *dsi)
+ 	if (IS_ERR(ctx))
+ 		return PTR_ERR(ctx);
+ 
+-	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
++	ctx->reset_gpio = devm_gpiod_get(dev, "reset", skip_init ? GPIOD_ASIS : GPIOD_OUT_HIGH);
+ 	if (IS_ERR(ctx->reset_gpio))
+ 		return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
+ 				     "Failed to get reset-gpios\n");
+-- 
+2.47.3
+

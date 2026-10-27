@@ -66,12 +66,12 @@ git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
 pmbootstrap/pmbootstrap.py init     # vendor qcom, device msm89x7, UI plasma-mobile
 ```
 
-Add the device tree to the kernel package, then build:
+Add the kernel patches to the kernel package, then build:
 
 ```sh
 K=$(pmbootstrap/pmbootstrap.py config aports)/device/testing/linux-postmarketos-qcom-msm89x7
-cp kernel/0001-arm64-dts-qcom-sdm439-Add-Lenovo-Yoga-Smart-Tab.patch $K/
-# add the patch file name to source= in $K/APKBUILD, then:
+cp kernel/*.patch $K/
+# add the patch file names to source= in $K/APKBUILD (in order), then:
 pmbootstrap/pmbootstrap.py checksum linux-postmarketos-qcom-msm89x7
 pmbootstrap/pmbootstrap.py build --force linux-postmarketos-qcom-msm89x7
 pmbootstrap/pmbootstrap.py install --password <your password>
@@ -119,7 +119,7 @@ the password given to `pmbootstrap install`. Over USB, the tablet is reachable a
 yours, lk2nd would find no DTB and the tablet would not boot:
 
 ```sh
-sudo apk add linux-postmarketos-qcom-msm89x7=7.1.3-r5    # use your built version
+sudo apk add linux-postmarketos-qcom-msm89x7=7.1.3-r11    # use your built version
 ```
 
 To update the kernel, copy your newer package and `sudo apk add --allow-untrusted
@@ -130,6 +130,9 @@ linux-postmarketos-qcom-msm89x7-<version>.apk`, then change the pin.
 ```sh
 printf '[Formats]\nLANG=fr_FR.UTF-8\n\n[Translations]\nLANGUAGE=fr\n' > ~/.config/plasma-localerc
 ```
+
+Installing a local `.apk` file pins it by checksum in `/etc/apk/world`, which also keeps it.
+After every kernel install, reboot to test it.
 
 **Faster UI** (software rendering until the DSI/GPU work is done): Settings → Workspace
 behaviour → animation speed: instant.

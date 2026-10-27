@@ -1,0 +1,84 @@
+From 6eec44b9a2cb67b2a9eab9f2dc0ffc97e75d54a7 Mon Sep 17 00:00:00 2001
+From: benmecha <dali@benmacha.tn>
+Date: Mon, 26 Oct 2026 23:11:48 +0000
+Subject: [PATCH 8/8] fixup! drm/panel: Add Lenovo YT-X705 FT8201 BOE panel;
+ enable display and GPU
+
+---
+ .../panel-lenovo-ytx705-ft8201-boe.c          | 36 +++++--------------
+ 1 file changed, 8 insertions(+), 28 deletions(-)
+
+diff --git a/drivers/gpu/drm/panel/msm89x7-generated/panel-lenovo-ytx705-ft8201-boe.c b/drivers/gpu/drm/panel/msm89x7-generated/panel-lenovo-ytx705-ft8201-boe.c
+index b79c574d0..5638d4e23 100644
+--- a/drivers/gpu/drm/panel/msm89x7-generated/panel-lenovo-ytx705-ft8201-boe.c
++++ b/drivers/gpu/drm/panel/msm89x7-generated/panel-lenovo-ytx705-ft8201-boe.c
+@@ -9,6 +9,8 @@
+ #include <linux/gpio/consumer.h>
+ #include <linux/module.h>
+ 
++#include <video/mipi_display.h>
++
+ #include <drm/drm_mipi_dsi.h>
+ #include <drm/drm_modes.h>
+ #include <drm/drm_panel.h>
+@@ -131,42 +133,20 @@ static const struct drm_panel_funcs lenovo_ytx705_ft8201_boe_panel_funcs = {
+ static int lenovo_ytx705_ft8201_boe_bl_update_status(struct backlight_device *bl)
+ {
+ 	struct mipi_dsi_device *dsi = bl_get_data(bl);
+-	u16 brightness = backlight_get_brightness(bl);
++	u8 brightness = backlight_get_brightness(bl);
+ 	int ret;
+ 
+-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+-
+-	ret = mipi_dsi_dcs_set_display_brightness_large(dsi, brightness);
++	/* Like the stock kernel: one byte, sent in low power mode */
++	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
++				 &brightness, sizeof(brightness));
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+-
+ 	return 0;
+ }
+ 
+-// TODO: Check if /sys/class/backlight/.../actual_brightness actually returns
+-// correct values. If not, remove this function.
+-static int lenovo_ytx705_ft8201_boe_bl_get_brightness(struct backlight_device *bl)
+-{
+-	struct mipi_dsi_device *dsi = bl_get_data(bl);
+-	u16 brightness;
+-	int ret;
+-
+-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+-
+-	ret = mipi_dsi_dcs_get_display_brightness_large(dsi, &brightness);
+-	if (ret < 0)
+-		return ret;
+-
+-	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+-
+-	return brightness;
+-}
+-
+ static const struct backlight_ops lenovo_ytx705_ft8201_boe_bl_ops = {
+ 	.update_status = lenovo_ytx705_ft8201_boe_bl_update_status,
+-	.get_brightness = lenovo_ytx705_ft8201_boe_bl_get_brightness,
+ };
+ 
+ static struct backlight_device *
+@@ -175,8 +155,8 @@ lenovo_ytx705_ft8201_boe_create_backlight(struct mipi_dsi_device *dsi)
+ 	struct device *dev = &dsi->dev;
+ 	const struct backlight_properties props = {
+ 		.type = BACKLIGHT_RAW,
+-		.brightness = 4095,
+-		.max_brightness = 4095,
++		.brightness = 255,
++		.max_brightness = 255,
+ 	};
+ 
+ 	return devm_backlight_device_register(dev, dev_name(dev), dev, dsi,
+-- 
+2.47.3
+

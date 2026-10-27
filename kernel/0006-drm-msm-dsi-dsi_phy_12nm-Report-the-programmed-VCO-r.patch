@@ -1,0 +1,47 @@
+From 4c505116235714e9fba5ee1b31bf99f7bd6792b0 Mon Sep 17 00:00:00 2001
+From: benmecha <dali@benmacha.tn>
+Date: Mon, 26 Oct 2026 22:54:49 +0000
+Subject: [PATCH 6/8] drm/msm/dsi: dsi_phy_12nm: Report the programmed VCO rate
+
+recalc_rate returned clk_hw_get_rate(), i.e. the cached rate, so the
+framework never saw the VCO change after set_rate and the pixel clock
+could not be derived (Failed to set rate pixel clk, -22). Keep the rate
+programmed by set_rate, as the downstream driver does.
+---
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
+index a1cf5142f..db6db4488 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_12nm.c
+@@ -151,6 +151,9 @@ struct dsi_pll_12nm {
+ 	spinlock_t gpdiv_lock;
+ 
+ 	struct pll_12nm_cached_state cached_state;
++
++	/* Rate programmed by set_rate, reported back by recalc_rate */
++	u64 vco_current_rate;
+ };
+ 
+ #define to_pll_12nm(x)	container_of(x, struct dsi_pll_12nm, clk_hw)
+@@ -525,6 +528,7 @@ static int dsi_pll_12nm_clk_set_rate(struct clk_hw *hw, unsigned long rate,
+ 	pll_12nm_setup_config(&config);
+ 
+ 	config.vco_current_rate = rate;
++	pll_12nm->vco_current_rate = rate;
+ 
+ 	vco_cntrl = readl(base + DSIPHY_PLL_VCO_CTRL);
+ 	vco_cntrl &= 0x30;
+@@ -618,7 +622,7 @@ static unsigned long dsi_pll_12nm_clk_recalc_rate(struct clk_hw *hw,
+ {
+ 	struct dsi_pll_12nm *pll_12nm = to_pll_12nm(hw);
+ 	void __iomem *base = pll_12nm->phy->pll_base;
+-	unsigned long vco_current_rate = clk_hw_get_rate(hw);
++	unsigned long vco_current_rate = pll_12nm->vco_current_rate;
+ 	const u64 ref_clk = VCO_REF_CLK_RATE;
+ 	u64 vco_rate = 0;
+ 	u32 m_div_5_0 = 0, m_div_11_6 = 0, m_div = 0;
+-- 
+2.47.3
+

@@ -1,0 +1,43 @@
+From dddd71d9587ddb669c8494589b94f747dee42e98 Mon Sep 17 00:00:00 2001
+From: Ben Macha <dali@benmacha.tn>
+Date: Tue, 27 Oct 2026 05:45:22 +0000
+Subject: [PATCH] clk: qcom: gcc-msm8917: Enable parent while changing DSI0
+ byte/pixel rate
+
+The DSI PLL is still off when the DSI host sets the byte and pixel
+rates. The pixel RCG then never latches its new configuration
+("pclk0_clk_src: rcg didn't update its configuration") and keeps
+running from the old one, so no video reaches the panel.
+
+Enable the parent around the rate change, as for other PLL-fed RCGs.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/clk/qcom/gcc-msm8917.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/clk/qcom/gcc-msm8917.c b/drivers/clk/qcom/gcc-msm8917.c
+index 6e0474848..cb41efe47 100644
+--- a/drivers/clk/qcom/gcc-msm8917.c
++++ b/drivers/clk/qcom/gcc-msm8917.c
+@@ -611,7 +611,7 @@ static struct clk_rcg2 byte0_clk_src = {
+ 		.parent_data = gcc_byte_data,
+ 		.num_parents = ARRAY_SIZE(gcc_byte_data),
+ 		.ops = &clk_byte2_ops,
+-		.flags = CLK_SET_RATE_PARENT,
++		.flags = CLK_SET_RATE_PARENT | CLK_OPS_PARENT_ENABLE,
+ 	}
+ };
+ 
+@@ -1195,7 +1195,7 @@ static struct clk_rcg2 pclk0_clk_src = {
+ 		.parent_data = gcc_pclk_data,
+ 		.num_parents = ARRAY_SIZE(gcc_pclk_data),
+ 		.ops = &clk_pixel_ops,
+-		.flags = CLK_SET_RATE_PARENT,
++		.flags = CLK_SET_RATE_PARENT | CLK_OPS_PARENT_ENABLE,
+ 	}
+ };
+ 
+-- 
+2.47.3
+

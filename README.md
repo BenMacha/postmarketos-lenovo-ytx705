@@ -19,7 +19,7 @@ Work in progress port of mainline Linux / [postmarketOS](https://postmarketos.or
 | Mainline kernel 7.1.3 + DTS | ✅ boots ([kernel/](kernel/)) |
 | postmarketOS + Plasma Mobile | ✅ boots from `userdata`, lock screen and shell work |
 | Display | ✅ `simpledrm` (bootloader splash, 1200×1920) — software rendering, slow |
-| DSI panel + GPU | 🚧 drivers in place but disabled in the DTS: the 12nm DSI PLL does not lock (see below) |
+| DSI panel + GPU | 🚧 drivers in place, disabled in the shipped DTS: PLL and clocks now fine, but the DSI link does not reach the panel yet (see below) |
 | Touchscreen | ✅ FocalTech FT8201 (`focaltech,ft8201`, `edt-ft5x06`), axes inverted (panel mounted upside down) |
 | Buttons | ✅ power, volume up/down |
 | eMMC, µSD, USB networking | ✅ |
@@ -40,13 +40,41 @@ On top of msm89x7-mainline 7.1.3 ([kernel/](kernel/)):
 4. `drm/msm/dsi: dsi_phy_12nm: Use determine_rate` — 7.1 dropped `clk_ops.round_rate`
 5. `soc: qcom: ubwc: Add SDM429 and SDM439` — without it `msm-mdss` fails with `-EINVAL`
    (`Couldn't find UBWC config data for this platform`)
+6. `drm/msm/dsi: dsi_phy_12nm: Report the programmed VCO rate` — `recalc_rate` returned a
+   stale value, so the PLL never locked and the pixel clock failed with `-EINVAL`
+7. `TEST: dsi_phy_12nm: force YT-X705 stock PHY timings` — the stock
+   `qcom,mdss-dsi-panel-timings-phy-12nm` (`1a 0a 0c 07 04 09 07 0a`)
+8. `fixup! drm/panel: …` — DCS backlight as one byte, 0–255, in LP mode, like the stock kernel
+9. `clk: qcom: gcc-msm8917: Enable parent while changing DSI0 byte/pixel rate` — the DSI PLL
+   is still off when the host sets the rates, so the pixel RCG never latched its new
+   configuration (`pclk0_clk_src: rcg didn't update its configuration`)
+10. `TEST: stock clk_pre/clk_post, log panel power mode` — the 12nm driver left
+    `DSI_CLKOUT_TIMING_CTRL` at 0; stock `t-clk-pre`/`t-clk-post` are `0x27`/`0x12`.
+    Also logs the panel power mode and adds `panel_lenovo_ytx705_ft8201_boe.skip_init=1`
+    (keep the panel as the bootloader left it)
+
+`TEST` patches are debugging aids, not meant for upstream.
 
 ### Display status (help welcome)
 
-With `mdss`/`gpu` enabled (DSI `vdda` = PM8953 L23, `vddio` = L6, PHY in LDO mode, as in
-the stock DT), the DRM device and the panel probe, but `DSI PLL is *not* locked` and
-`dsi_link_clk_set_rate_6g: Failed to set rate pixel clk, -22`, then vblank timeouts.
-Note: a failed `msm-mdss` probe also turns off the bootloader framebuffer (black screen).
+No SDM439 device has a working DSI display in msm89x7-mainline yet (pine, olive and
+panther use simplefb too). With `mdss`/`gpu` enabled (DSI `vdda` = PM8953 L23, `vddio` =
+L6, PHY in LDO mode, as in the stock DT) and patches 6–10:
+
+- the DSI PLL locks at 1981.152 MHz, pixel clock 165.096 MHz, byte clock 123.822 MHz, and
+  the GCC registers show the configuration applied;
+- the DPU runs and the DSI video engine is busy with the lanes in HS mode;
+- PMI632 LCDB (panel bias) is enabled with VREG_OK, PM8953 GPIO 4 (backlight enable) is high;
+- but the screen stays black with no backlight. The panel reports `power_mode=0x0` even
+  before Linux resets it (a lit panel should report `0x9c`), and after a DPMS off/on every
+  command fails with `dsi_cmds2buf_tx: cmd dma tx failed … -110`. The DSI command path does
+  not reach the panel.
+
+Next step: compare the DSI host setup (`mdss_dsi_host_init`, `msm_mdss_io_8974.c` in the
+Lenovo 4.9 kernel) with the mainline 6G host, register by register.
+
+Note: as soon as `msm-mdss` takes over, the bootloader framebuffer stops (black screen),
+so test with SSH over USB or Wi-Fi.
 
 ## Hardware (from the stock device tree)
 
