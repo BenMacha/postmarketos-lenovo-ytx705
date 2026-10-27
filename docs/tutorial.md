@@ -134,6 +134,14 @@ printf '[Formats]\nLANG=fr_FR.UTF-8\n\n[Translations]\nLANGUAGE=fr\n' > ~/.confi
 Installing a local `.apk` file pins it by checksum in `/etc/apk/world`, which also keeps it.
 After every kernel install, reboot to test it.
 
+**Disable suspend.** With simplefb the screen is only the bootloader's framebuffer: after a
+suspend the display hardware is powered off and Linux cannot turn it back on (black screen
+until reboot):
+
+```sh
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+```
+
 **Faster UI** (software rendering until the DSI/GPU work is done): Settings → Workspace
 behaviour → animation speed: instant.
 

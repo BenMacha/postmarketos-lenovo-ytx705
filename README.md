@@ -133,6 +133,9 @@ calibration data.
 - The touchscreen reports coordinates rotated by 180° compared to the bootloader
   framebuffer: the DTS sets `touchscreen-inverted-x` and `touchscreen-inverted-y`.
 
+- With simplefb, suspend kills the display for good (black screen until reboot): mask
+  the systemd sleep targets (see the tutorial).
+
 ## Building postmarketOS
 
 The kernel patch goes into the `linux-postmarketos-qcom-msm89x7` package of pmaports

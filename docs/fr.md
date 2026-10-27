@@ -54,6 +54,10 @@ Les commandes détaillées sont dans le tutoriel anglais : [tutorial.md](tutoria
 - **Interface en français** :
   `printf '[Formats]\nLANG=fr_FR.UTF-8\n\n[Translations]\nLANGUAGE=fr\n' > ~/.config/plasma-localerc`
   puis redémarrer.
+- **Désactiver la mise en veille** : avec l'affichage simplefb, l'écran n'est que l'image
+  laissée par le bootloader ; après une veille le matériel d'affichage est éteint et Linux ne
+  sait pas le rallumer (écran noir jusqu'au redémarrage) :
+  `sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target`
 - **Moins de lenteur** en attendant le GPU : Paramètres → Comportement de l'espace de
   travail → vitesse des animations : instantanée.
 
